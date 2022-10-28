@@ -1,4 +1,69 @@
-const express = require('express')
+import express from 'express'
+import jwt from 'jsonwebtoken'
+import mongoose from 'mongoose'
+import {validationResult} from 'express-validator'
+import bcrypt from 'bcrypt'
+
+import {registerValidation} from './validations/auth.js'
+
+import UserModel from './models/User.js'
+
+mongoose.connect('mongodb+srv://alexandev444:s201290935s@cluster0.zuwj3nx.mongodb.net/blog?retryWrites=true&w=majority')
+.then(()=>{console.log('DB ok')})
+.catch((err)=>{console.log('DB error',err)})// подключение к базе данных
+
+
+const app = express()
+
+app.use(express.json())// получение информации из тела запроса
+
+app.post('/auth/register',registerValidation, async (req,res)=>{
+try{
+  const errors = validationResult(req)
+if(!errors.isEmpty()){
+  return res.status(400).json(errors.array())
+}
+
+const password = req.body.password
+const salt = await bcrypt.genSalt(10) // создаем соль для шифровки
+const passwordHash = await bcrypt.hash(password,salt) // создаем зашифрованный пароль
+
+const doc = new UserModel({
+  email:req.body.email,
+  fullName:req.body.fullName,
+  avatarUrl:req.body.avatarUrl,
+  passwordHash
+}) // создание пользователя для записи в базу данных
+
+const user = await doc.save() // создаем пользователя
+
+const token = jwt.sign({
+  _id:user._id
+},'secret123',
+{
+  expiresIn:'30d'
+}) // создаем токен из id
+
+res.json({
+  ...user,
+  token
+}) // возвращаем информацию о пользователе и токен
+}catch(err){
+  console.log(err)
+res.status(500).json({
+  message:'failed to register...'
+})
+}
+})
+
+app.listen(4444,(err)=>{
+  if(err){
+    return console.log(err)
+  }
+  console.log(`Node.js web server at port 4444 is running..`)
+})
+
+/* const express = require('express')
 const app = express()
 const {addUser,getUsers} = require('./repository')
 const users = require('./users-router')
@@ -28,3 +93,4 @@ app.listen(7542,function(){
 
 
 
+ */

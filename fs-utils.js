@@ -1,4 +1,4 @@
-let fs = require("fs")
+/* let fs = require("fs")
 
 exports.readJsonFromFile = async (filePath)=>{
   return new Promise((resolve,reject)=>{
@@ -22,4 +22,4 @@ exports.writeJsonToFile = async (filePath,data)=>{
       }   
     })
   })
-}
+} */
