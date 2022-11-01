@@ -22,7 +22,7 @@ export const register = async (req,res)=>{
     passwordHash:hash
   }) // создание пользователя для записи в базу данных
   
-  const user = await doc.save() // создаем пользователя
+  const user = await doc.save() // сохраняем пользователя в базу данных
   
   const token = jwt.sign({
     _id:user._id
@@ -84,7 +84,7 @@ res.status(500).json({
 
 export const getMe = async (req,res)=>{
   try{
-    const user = await UserModel.findById(req.userId) // находим в БД пользователя. req.userId получаем из checkAuth 
+    const user = await UserModel.findById(req.userId) // находим в базе данных пользователя. req.userId получаем из checkAuth 
   
     if(!user){
       return res.status(404).json({
