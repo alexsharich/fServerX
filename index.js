@@ -1,10 +1,10 @@
 import express from 'express'
 import mongoose from 'mongoose'
+import multer from 'multer'
 
 import {registerValidation,loginValidation, postCreateValidation} from './validations.js'
-import checkAuth from './utils/checkAuth.js'
-import * as UserController from './controllers/UserController.js'
-import * as PostController from './controllers/PostController.js'
+import {UserController,PostController} from './controllers/index.js'
+import {handleValidationErrors,checkAuth} from './utils/index.js' 
 
 mongoose.connect('mongodb+srv://alexandev444:s201290935s@cluster0.zuwj3nx.mongodb.net/blog?retryWrites=true&w=majority')
 .then(()=>{console.log('DB ok')})
@@ -12,17 +12,35 @@ mongoose.connect('mongodb+srv://alexandev444:s201290935s@cluster0.zuwj3nx.mongod
 
 const app = express()
 
-app.use(express.json())// получение информации из тела запроса
+const storage = multer.diskStorage({
+  destination:(_,__,cb)=>{
+    cb(null,'uploads')
+  },
+  filename:(_,file,cb)=>{
+    cb(null,file.originalname)
+  }
+}) // указываем, какой путь использовать. создаем хранилище для картинок,которые будем загружать. null - отсутсвие ошибок, uploads - папка, в которую загружаем картинки
 
-app.post('/auth/login',loginValidation, UserController.login )
-app.post('/auth/register',registerValidation, UserController.register )
+const upload = multer({storage}) // хранилище
+
+app.use(express.json())// получение информации из тела запроса
+app.use('/uploads',express.static('uploads'))
+
+app.post('/auth/login', loginValidation, handleValidationErrors, UserController.login )
+app.post('/auth/register', registerValidation, handleValidationErrors, UserController.register )
 app.get('/auth/me',checkAuth, UserController.getMe)
 
-app.get('/posts',PostController.getAll)
-app.get('/posts/:id',PostController.getOne)
-app.post('/posts',checkAuth, postCreateValidation, PostController.create)
-app.delete('/posts/:id',checkAuth,PostController.remove)
-app.patch('/posts/:id',checkAuth,PostController.update)
+app.post('/upload',checkAuth, upload.single('image'),(req,res)=>{
+  res.json({
+    url:`/uploads/${req.file.originalname}`
+  })
+})
+
+app.get('/posts', PostController.getAll)
+app.get('/posts/:id', PostController.getOne)
+app.post('/posts',checkAuth, postCreateValidation, handleValidationErrors, PostController.create)
+app.delete('/posts/:id',checkAuth, PostController.remove)
+app.patch('/posts/:id',checkAuth, postCreateValidation, handleValidationErrors, PostController.update)
 
 
 app.listen(4444,(err)=>{
