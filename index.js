@@ -3,53 +3,53 @@ import mongoose from 'mongoose'
 import multer from 'multer'
 import cors from 'cors'
 
-import {registerValidation,loginValidation, postCreateValidation} from './validations.js'
-import {UserController,PostController} from './controllers/index.js'
-import {handleValidationErrors,checkAuth} from './utils/index.js' 
+import { registerValidation, loginValidation, postCreateValidation } from './validations.js'
+import { UserController, PostController } from './controllers/index.js'
+import { handleValidationErrors, checkAuth } from './utils/index.js'
 
 mongoose.connect('mongodb+srv://alexandev444:s201290935s@cluster0.zuwj3nx.mongodb.net/blog?retryWrites=true&w=majority')
-.then(()=>{console.log('DB ok')})
-.catch((err)=>{console.log('DB error',err)})// подключение к базе данных
+  .then(() => { console.log('DB ok') })
+  .catch((err) => { console.log('DB error', err) })// подключение к базе данных
 
 const app = express()
 
 const storage = multer.diskStorage({
-  destination:(_,__,cb)=>{
-    cb(null,'uploads')
+  destination: (_, __, cb) => {
+    cb(null, 'uploads')
   },
-  filename:(_,file,cb)=>{
-    cb(null,file.originalname)
+  filename: (_, file, cb) => {
+    cb(null, file.originalname)
   }
 }) // указываем, какой путь использовать. создаем хранилище для картинок,которые будем загружать. null - отсутсвие ошибок, uploads - папка, в которую загружаем картинки
 
-const upload = multer({storage}) // хранилище
+const upload = multer({ storage }) // хранилище
 
 app.use(express.json())// получение информации из тела запроса
 app.use(cors())
-app.use('/uploads',express.static('uploads'))
+app.use('/uploads', express.static('uploads'))
 
-app.post('/auth/login', loginValidation, handleValidationErrors, UserController.login )
-app.post('/auth/register', registerValidation, handleValidationErrors, UserController.register )
-app.get('/auth/me',checkAuth, UserController.getMe)
+app.post('/auth/login', loginValidation, handleValidationErrors, UserController.login)
+app.post('/auth/register', registerValidation, handleValidationErrors, UserController.register)
+app.get('/auth/me', checkAuth, UserController.getMe)
 
-app.post('/upload',checkAuth, upload.single('image'),(req,res)=>{
+app.post('/upload', checkAuth, upload.single('image'), (req, res) => {
   res.json({
-    url:`/uploads/${req.file.originalname}`
+    url: `/uploads/${req.file.originalname}`
   })
 })
 
-app.get('/tags',PostController.getLastTags)
+app.get('/tags', PostController.getLastTags)
 
 app.get('/posts', PostController.getAll)
-app.get('/posts/tags',PostController.getLastTags)
+app.get('/posts/tags', PostController.getLastTags)
 app.get('/posts/:id', PostController.getOne)
-app.post('/posts',checkAuth, postCreateValidation, handleValidationErrors, PostController.create)
-app.delete('/posts/:id',checkAuth, PostController.remove)
-app.patch('/posts/:id',checkAuth, postCreateValidation, handleValidationErrors, PostController.update)
+app.post('/posts', checkAuth, postCreateValidation, handleValidationErrors, PostController.create)
+app.delete('/posts/:id', checkAuth, PostController.remove)
+app.patch('/posts/:id', checkAuth, postCreateValidation, handleValidationErrors, PostController.update)
 
 
-app.listen(4444,(err)=>{
-  if(err){
+app.listen(4444, (err) => {
+  if (err) {
     return console.log(err)
   }
   console.log(`Node.js web server at port 4444 is running..`)
